@@ -17,19 +17,19 @@ plant.type<-read_excel(path = "Data/species-richness-2018.xlsx", sheet = "Functi
 
 ################  Number of species per plot  ################
 data.glmer <- data %>% 
-  gather(key = plott, value = abundance, - species) %>% #species, funtype left_join(sppfun)
+  gather(key = quadrat, value = abundance, - species) %>% #species, funtype left_join(sppfun)
   left_join(plant.type) %>% 
   filter(!is.na(abundance)) %>% 
-  count(plott, funtype) 
+  count(quadrat, funtype) 
 
 
 data.glmer <- data.glmer %>% 
-  complete(plott, nesting(funtype), fill = list(n = 0)) %>%        #fill inn funtype with 0 occurences
+  complete(quadrat, nesting(funtype), fill = list(n = 0)) %>%        #fill inn funtype with 0 occurences
   bind_rows(data.glmer %>%                                         #calculate total species richness
-              group_by(plott) %>% 
+              group_by(quadrat) %>% 
               summarise(n = sum(n)) %>% 
               mutate(funtype = "total")) %>% 
-  mutate(site = gsub(".$", "", plott)) %>%
+  mutate(site = gsub(".$", "", quadrat)) %>%
   mutate(site = gsub("G", "S", site))
 
 
