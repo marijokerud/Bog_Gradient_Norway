@@ -1,50 +1,55 @@
 library(readxl)
 library(tidyverse)
 
-
+Sys.setlocale("LC_ALL", "Norwegian") #works with æøå or use "no_NB.utf8"
 
 #GET DATA
 data<-read_excel(path = "Data/species-richness-2018.xlsx", sheet = "Species", col_names = TRUE)
 plant.type<-read_excel(path = "Data/species-richness-2018.xlsx", sheet = "Functional", col_names = TRUE)
+enviromental.data <- read_excel(path = "Data/new_N_s.xlsx", col_names = TRUE)
+climate.data <- read_excel(path = "Data/Env_2018.xlsx", sheet = "New", col_names = TRUE)
 
-
-################  Number of species per functional trait per plot  ################
-data.glmer <- data %>% 
-  select(-species_old) %>% 
-  gather(key = quadrat, value = abundance, - species) %>% 
-  filter(!is.na(abundance)) %>% 
-  left_join(plant.type) %>% 
-  count(quadrat, funtype) %>% 
-  complete(quadrat, nesting(funtype), fill = list(n = 0)) %>%        #fill inn funtype with 0 occurences
-  bind_rows(data.glmer %>%                                         #calculate total species richness
-              group_by(quadrat) %>% 
-              summarise(n = sum(n)) %>% 
-              mutate(funtype = "total")) %>% 
-  mutate(site = gsub(".$", "", quadrat)) %>%
-  mutate(site = gsub("G", "S", site))
-
-
-data.glmer<- data.glmer %>% 
-  left_join(Site) %>% 
-  left_join(env_mean) 
-
-
-
-data.nmds <- data %>% 
+data <- data %>% 
   select(-species_old)
 
 
-############### Not used
-data.glmer <- data.glmer %>% 
-  complete(quadrat, nesting(funtype), fill = list(n = 0)) %>%        #fill inn funtype with 0 occurences
-  bind_rows(data.glmer %>%                                         #calculate total species richness
+################ ENVIRONMENAL DATA #####################
+
+climate <- climate.data %>% 
+  select(site, Precipitation, Tetraterm, lat, long) %>% 
+  gather(key = Variable, value = Deposition, - site, - lat, - long)
+
+enviromental <- enviromental.data %>% 
+  select(-Grid, -Site) %>% 
+  bind_rows(climate)
+
+
+################  SPECIES RICHNESS  ################
+
+richness <- data %>% 
+  gather(key = quadrat, value = abundance, - species) %>% 
+  filter(!is.na(abundance)) %>%                                        #remove NA's
+  mutate(quadrat= substr(quadrat, 1, 4)) %>%                           #extract the first four letters in quadrat
+  left_join(plant.type) %>%                                            # add functional trait to data
+  count(quadrat, funtype) %>%                                          #count no species in functional groups
+  complete(quadrat, nesting(funtype), fill = list(n = 0))              #fill inn functional groups (funtype) with 0 occurences
+
+
+richness <- richness %>% 
+  bind_rows(richness %>%                                         
               group_by(quadrat) %>% 
               summarise(n = sum(n)) %>% 
-              mutate(funtype = "total")) %>% 
-  mutate(site = gsub(".$", "", quadrat)) %>%
+              mutate(funtype = "total")) %>%                            #calculate total species richness
+  rename(no_species = n) %>% 
+  mutate(site = gsub(".$", "", quadrat)) %>%                           #add site
   mutate(site = gsub("G", "S", site))
 
 
-data.glmer<- data.glmer %>% 
-  left_join(Site) %>% 
-  left_join(env_mean) 
+data.glmer<- richness %>% 
+  left_join(enviromental) 
+
+
+################  ORDINATION DATA  ################
+
+data.nmds <- data %>% 
+  select(-species_old)
