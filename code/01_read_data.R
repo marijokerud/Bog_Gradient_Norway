@@ -23,8 +23,10 @@ climate <- climate.data %>%
 enviromental <- enviromental.data %>% 
   select(-Grid, -Site) %>% 
   bind_rows(climate) %>% 
-  pivot_wider(names_from = Variable, values_from = Deposition) %>%
-  select(-site, -lat, -long) %>%
+  pivot_wider(names_from = Variable, values_from = Deposition)
+
+enviromental.PCA <- enviromental %>% 
+  select(-site) %>% #, -lat, -long
   as.data.frame()
 
 
@@ -33,7 +35,6 @@ enviromental <- enviromental.data %>%
 richness <- data %>% 
   gather(key = quadrat, value = abundance, - species) %>% 
   filter(!is.na(abundance)) %>%                                        #remove NA's
-  mutate(quadrat= substr(quadrat, 1, 4)) %>%                           #extract the first four letters in quadrat
   left_join(plant.type) %>%                                            # add functional trait to data
   count(quadrat, funtype) %>%                                          #count no species in functional groups
   complete(quadrat, nesting(funtype), fill = list(n = 0))              #fill inn functional groups (funtype) with 0 occurences
@@ -45,16 +46,33 @@ richness <- richness %>%
               summarise(n = sum(n)) %>% 
               mutate(funtype = "total")) %>%                            #calculate total species richness
   rename(no_species = n) %>% 
-  mutate(site = gsub(".$", "", quadrat)) %>%                           #add site
-  mutate(site = gsub("G", "S", site))
-
+  mutate(site = gsub(".$", "", quadrat))                                #add site  mutate(site = gsub("G", "S", site))
+  
 
 data.glmer<- richness %>% 
   left_join(enviromental) 
 
 
-################  NMDS DATA  ################
+species_richness <- data %>% 
+  gather(key = quadrat, value = abundance, - species) %>% 
+  filter(!is.na(abundance))  %>% 
+  mutate(site = gsub(".$", "", quadrat)) %>% 
+  group_by(site) %>%
+  summarise(
+    richness = n_distinct(species),        # number of unique species
+    total_abundance = sum(abundance),      # optional: sum abundances
+    .groups = "drop"
+  )
 
+print(species_richness)
+
+################  PCA DATA  ################
+
+pca.data <- enviromental %>% 
+  left_join(species_richness) %>% 
+  select(-site)
+
+################  NMDS DATA  ################
 
 species.mat <- data %>% 
   gather(key = quadrat, value = abundance, - species) %>% 
@@ -65,12 +83,3 @@ species.mat <- data %>%
 
 species.mat<- matrify(species.mat)
 species.matrix <- species.mat 
-
-################  PCA DATA  ################
-
-data(USArrests) # Example dataset
-df_pca <- USArrests %>%
-  as_tibble() %>%
-  mutate(State = row.names(USArrests)) %>% # Add row names as a variable
-  select(-State) %>% # Exclude non-numeric columns from PCA
-  scale() # Scale the data for PCA
