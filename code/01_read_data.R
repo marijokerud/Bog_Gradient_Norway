@@ -22,7 +22,10 @@ climate <- climate.data %>%
 
 enviromental <- enviromental.data %>% 
   select(-Grid, -Site) %>% 
-  bind_rows(climate)
+  bind_rows(climate) %>% 
+  pivot_wider(names_from = Variable, values_from = Deposition) %>%
+  select(-site, -lat, -long) %>%
+  as.data.frame()
 
 
 ################  SPECIES RICHNESS  ################
@@ -50,7 +53,7 @@ data.glmer<- richness %>%
   left_join(enviromental) 
 
 
-################  ORDINATION DATA  ################
+################  NMDS DATA  ################
 
 
 species.mat <- data %>% 
@@ -63,3 +66,11 @@ species.mat <- data %>%
 species.mat<- matrify(species.mat)
 species.matrix <- species.mat 
 
+################  PCA DATA  ################
+
+data(USArrests) # Example dataset
+df_pca <- USArrests %>%
+  as_tibble() %>%
+  mutate(State = row.names(USArrests)) %>% # Add row names as a variable
+  select(-State) %>% # Exclude non-numeric columns from PCA
+  scale() # Scale the data for PCA
