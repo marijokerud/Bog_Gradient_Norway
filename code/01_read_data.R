@@ -1,5 +1,6 @@
 library(readxl)
 library(tidyverse)
+library(labdsv)
 
 Sys.setlocale("LC_ALL", "Norwegian") #works with æøå or use "no_NB.utf8"
 
@@ -51,5 +52,14 @@ data.glmer<- richness %>%
 
 ################  ORDINATION DATA  ################
 
-data.nmds <- data %>% 
-  select(-species_old)
+
+species.mat <- data %>% 
+  gather(key = quadrat, value = abundance, - species) %>% 
+  filter(!is.na(abundance)) %>%                                        #remove NA's
+  mutate(quadrat= substr(quadrat, 1, 4)) %>% 
+  select(quadrat, species, abundance) %>% 
+  as.data.frame
+
+species.mat<- matrify(species.mat)
+species.matrix <- species.mat 
+
