@@ -5,12 +5,12 @@ library(labdsv)
 Sys.setlocale("LC_ALL", "Norwegian") #works with æøå or use "no_NB.utf8"
 
 #GET DATA
-data<-read_excel(path = "Data/species-richness-2018.xlsx", sheet = "Species", col_names = TRUE)
+comm.raw<-read_excel(path = "Data/species-richness-2018.xlsx", sheet = "Species", col_names = TRUE)
 plant.type<-read_excel(path = "Data/species-richness-2018.xlsx", sheet = "Functional", col_names = TRUE)
 enviromental.data <- read_excel(path = "Data/new_N_s.xlsx", col_names = TRUE)
 climate.data <- read_excel(path = "Data/Env_2018.xlsx", sheet = "New", col_names = TRUE)
 
-data <- data %>% 
+comm.raw <- comm.raw %>% 
   select(-species_old)
 
 
@@ -32,7 +32,7 @@ enviromental.PCA <- enviromental %>%
 
 ################  SPECIES RICHNESS  ################
 
-richness <- data %>% 
+richness <- comm.raw %>% 
   gather(key = quadrat, value = abundance, - species) %>% 
   filter(!is.na(abundance)) %>%                                        #remove NA's
   left_join(plant.type) %>%                                            # add functional trait to data
@@ -53,7 +53,7 @@ data.glmer<- richness %>%
   left_join(enviromental) 
 
 
-species_richness <- data %>% 
+species_richness <- comm.raw %>% 
   gather(key = quadrat, value = abundance, - species) %>% 
   filter(!is.na(abundance))  %>% 
   mutate(site = gsub(".$", "", quadrat)) %>% 
