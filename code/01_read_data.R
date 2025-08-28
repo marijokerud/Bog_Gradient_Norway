@@ -5,13 +5,17 @@ library(labdsv)
 Sys.setlocale("LC_ALL", "Norwegian") #works with æøå or use "no_NB.utf8"
 
 #GET DATA
-comm.raw<-read_excel(path = "Data/species-richness-2018.xlsx", sheet = "Species", col_names = TRUE)
-plant.type<-read_excel(path = "Data/species-richness-2018.xlsx", sheet = "Functional", col_names = TRUE)
+comm.raw <-read_excel(path = "Data/species-richness-2018.xlsx", sheet = "Species", col_names = TRUE)
+plant.type <-read_excel(path = "Data/species-richness-2018.xlsx", sheet = "Functional", col_names = TRUE)
 enviromental.data <- read_excel(path = "Data/new_N_s.xlsx", col_names = TRUE)
 climate.data <- read_excel(path = "Data/Env_2018.xlsx", sheet = "New", col_names = TRUE)
+plot.info <-read_excel(path = "Data/species-richness-2018.xlsx", sheet = "Plot", col_names = TRUE)
 
 comm.raw <- comm.raw %>% 
   select(-species_old)
+
+plot.info <- plot.info %>% 
+  select(quadrat, micro.topo)
 
 
 ################ ENVIRONMENAL DATA #####################
