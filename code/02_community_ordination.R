@@ -32,8 +32,8 @@ res <- rda(comm.sp)
 summary(res)
 scores(res, display = "sites")
   
-output <- bind_cols(comm.info, scores(res, display = "sites"))
-output <- output %>% 
+out <- bind_cols(comm.info, scores(res, display = "sites"))
+output <- out %>% 
   select(quadrat, site, Total.N, PC1, PC2) %>% 
   left_join(plot.info, by = "quadrat")
   
@@ -114,7 +114,7 @@ Species <- sp %>%
     coord_equal(xlim = c(PC1_min, PC1_max),
                 ylim = c(PC2_min, PC2_max)) +
     geom_segment(data = sp %>%
-                   mutate(length = sqrt(PC1^2 + PC2^2)),
+                 mutate(length = sqrt(PC1^2 + PC2^2)),
                  aes(x = 0, y = 0, xend = PC1, yend = PC2),
                  arrow = arrow(length = unit(0.2,"cm")),
                  alpha = 0.75,
