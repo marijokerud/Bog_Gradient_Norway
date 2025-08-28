@@ -8,6 +8,7 @@ library(ggrepel)
 
 ## COMMUNITY ORDINATION (PCA)
 
+#DATA
 comm.wide <- comm.raw %>% 
   gather(key = quadrat, value = cover, - species) %>% 
   filter(!is.na(cover)) %>%                                        #remove NA's
@@ -25,14 +26,14 @@ comm.info <- comm.wide %>%
     mutate(site= substr(quadrat, 1, 3)) %>%
     left_join(enviromental)
   
-# make pca
+# MAKE PCA
 res <- rda(comm.sp)
   
 summary(res)
 scores(res, display = "sites")
   
-out <- bind_cols(comm.info, scores(res, display = "sites"))
-out <- out %>% 
+output <- bind_cols(comm.info, scores(res, display = "sites"))
+output <- output %>% 
   select(quadrat, site, Total.N, PC1, PC2) %>% 
   left_join(plot.info, by = "quadrat")
   
@@ -45,13 +46,13 @@ sp <- scores(res, display = "species") |>
 dist_matrix <- vegdist(comm.sp, method = "euclidean")
 # adonis test
 adonis <- adonis2(dist_matrix ~ Total.N , data =   comm.info, permutations = 999, method = "euclidean")
-list(out, sp, res, adonis)
+list(output, sp, res, adonis)
  
 
 ####### MAKE SITE PCA FIGURE  
 # calculte centroids
-centroids <- out  %>% 
-    left_join(out  %>% 
+centroids <- output  %>% 
+    left_join(output  %>% 
                 group_by(site)  %>% 
                 summarise(centroid1 = mean(PC1),
                           centroid2 = mean(PC2)),
@@ -59,7 +60,7 @@ centroids <- out  %>%
   
 e_B <- eigenvals(res)/sum(eigenvals(res))
 
-Site <- out %>%
+Site <- output %>%
     ggplot(aes(x = PC1, y = PC2, colour = site, shape = micro.topo)) +
   geom_point(size = 2) +
   scale_shape_manual(values = c(24, 22), name = "Microtopography") + 
@@ -75,7 +76,7 @@ Site <- out %>%
                alpha = 0.5,
                show.legend = FALSE) +
   stat_ellipse(
-    data = out,
+    data = output,
     aes(x = PC1, y = PC2, group = micro.topo, linetype = micro.topo),
     inherit.aes = FALSE,     # don't use colour = site from the main mapping
     level = 0.95,            # 95% ellipse
