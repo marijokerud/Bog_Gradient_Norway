@@ -80,11 +80,3 @@ arrow.env <- output %>%
         plot.tag.position = c(0, 0.8),
         plot.tag = element_text(vjust = -1.5, hjust = -0.5, size = 10))
 
-  
-  
-  
-  
-  
-  
-  
-  
