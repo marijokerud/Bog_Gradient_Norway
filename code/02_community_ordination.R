@@ -18,7 +18,7 @@ comm.wide <- comm.raw %>%
               values_fill = 0)
  
 comm.sp <- comm.wide %>%
-    select(-quadrat)
+  column_to_rownames("quadrat")
   
 # meta data
 comm.info <- comm.wide %>%
