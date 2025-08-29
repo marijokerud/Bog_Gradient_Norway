@@ -47,16 +47,17 @@ e_B <- eigenvals(res)/sum(eigenvals(res))
 Site <- output %>%
   ggplot(aes(x = PC1, y = PC2, colour = site)) +
   geom_point(size = 2) +
-    coord_equal() +
-    labs(x = glue("PCA1 ({round(e_B[1] * 100, 1)}%)"),
-         y = glue("PCA2 ({round(e_B[2] * 100, 1)}%)"),
-         tag = "(a)") +
-    guides(colour=guide_legend(title="Site")) +
-    theme_bw() +
-    theme(aspect.ratio = 1,
-          plot.tag.position = c(0, 0.8),
-          plot.tag = element_text(vjust = -1.5, hjust = -0.5, size = 10))
- 
+  coord_equal() +
+  labs(x = glue("PCA1 ({round(e_B[1] * 100, 1)}%)"),
+       y = glue("PCA2 ({round(e_B[2] * 100, 1)}%)"),
+       tag = "(a)") +
+  geom_text_repel(aes(label = site)) +   
+  guides(colour=guide_legend(title="Site")) +
+  theme_bw() +
+  theme(aspect.ratio = 1,
+        plot.tag.position = c(0, 0.8),
+        plot.tag = element_text(vjust = -1.5, hjust = -0.5, size = 10))
+Site 
  
 #### ARROWS
 important_env <- sp.env %>%
