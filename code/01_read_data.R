@@ -36,23 +36,6 @@ enviromental.PCA <- enviromental %>%
 
 ################  SPECIES RICHNESS  ################
 
-richness <- comm.raw %>% 
-  gather(key = quadrat, value = abundance, - species) %>% 
-  filter(!is.na(abundance)) %>%                                        #remove NA's
-  left_join(plant.type) %>%                                            # add functional trait to data
-  count(quadrat, funtype) %>%                                          #count no species in functional groups
-  complete(quadrat, nesting(funtype), fill = list(n = 0))              #fill inn functional groups (funtype) with 0 occurences
-
-
-richness <- richness %>% 
-  bind_rows(richness %>%                                         
-              group_by(quadrat) %>% 
-              summarise(n = sum(n)) %>% 
-              mutate(funtype = "total")) %>%                            #calculate total species richness
-  rename(no_species = n) %>% 
-  mutate(site = gsub(".$", "", quadrat))                                #add site  mutate(site = gsub("G", "S", site))
-  
-
 data.glmer<- richness %>% 
   left_join(enviromental) 
 
@@ -78,7 +61,7 @@ pca.data <- enviromental %>%
 
 ################  NMDS DATA  ################
 
-species.mat <- data %>% 
+species.mat <- comm.raw %>% 
   gather(key = quadrat, value = abundance, - species) %>% 
   filter(!is.na(abundance)) %>%                                        #remove NA's
   mutate(quadrat= substr(quadrat, 1, 4)) %>% 
