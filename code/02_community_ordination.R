@@ -57,12 +57,17 @@ centroids <- output  %>%
                 summarise(centroid1 = mean(PC1),
                           centroid2 = mean(PC2)),
               by = "site")
+
+site.name <- centroids %>% 
+  select(site, centroid1, centroid2, micro.topo) %>% 
+  unique()
   
 e_B <- eigenvals(res)/sum(eigenvals(res))
 
 Site <- output %>%
-    ggplot(aes(x = PC1, y = PC2, colour = site, shape = micro.topo)) +
+  ggplot(aes(x = PC1, y = PC2, colour = site, shape = micro.topo)) +
   geom_point(size = 2) +
+  #geom_text_repel(data = site.name, aes(x= centroid1, y = centroid2, label = site)) +   #Take out for cleaner plot
   scale_shape_manual(values = c(24, 22), name = "Microtopography") + 
   geom_point(data = centroids,
              aes(x = centroid1, y = centroid2, colour = site),
@@ -75,6 +80,7 @@ Site <- output %>%
                size = 0.6,
                alpha = 0.5,
                show.legend = FALSE) +
+  
   stat_ellipse(
     data = output,
     aes(x = PC1, y = PC2, group = micro.topo, linetype = micro.topo),
@@ -85,17 +91,18 @@ Site <- output %>%
     colour = "black",
     alpha = 0.7 ) +
   scale_linetype_manual(values = c("dashed", "solid"), name = "Microtopography") +
-    coord_equal() +
-    labs(x = glue("PCA1 ({round(e_B[1] * 100, 1)}%)"),
-         y = glue("PCA2 ({round(e_B[2] * 100, 1)}%)"),
-         tag = "(a)") +
+
+  coord_equal() +
+  labs(x = glue("PCA1 ({round(e_B[1] * 100, 1)}%)"),
+       y = glue("PCA2 ({round(e_B[2] * 100, 1)}%)"),
+       tag = "(a)") +
   guides(colour=guide_legend(title="Site")) +
-    theme_bw() +
-    theme(aspect.ratio = 1,
-          plot.tag.position = c(0, 0.8),
-          plot.tag = element_text(vjust = -1.5, hjust = -0.5, size = 10))
+  theme_bw() +
+  theme(aspect.ratio = 1,
+        plot.tag.position = c(0, 0.8),
+        plot.tag = element_text(vjust = -1.5, hjust = -0.5, size = 10))
 
-
+Site
 
 ####### MAKE SPECIES PCA FIGURE
 # PC range for species
