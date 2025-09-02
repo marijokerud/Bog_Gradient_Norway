@@ -17,8 +17,8 @@ scores(res, display = "sites")
   
 out <- bind_cols(comm.info, scores(res, display = "sites"))
 output <- out %>% 
-  select(quadrat, site, Total.N, PC1, PC2) %>% 
-  left_join(plot.info, by = "quadrat")
+  select(plot_id, site, Total.N, PC1, PC2) %>% 
+  left_join(plot.info, by = "plot_id")
   
 sp <- scores(res, display = "species") |>
   as.data.frame() |>

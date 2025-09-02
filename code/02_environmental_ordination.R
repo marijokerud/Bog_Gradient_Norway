@@ -10,8 +10,8 @@ scores(res, display = "sites")
 
 output <- bind_cols(enviromental, scores(res, display = "sites"))
 #output <- out %>% 
-  select(quadrat, site, Total.N, PC1, PC2) %>% 
-  left_join(plot.info, by = "quadrat")
+  select(plot_id, site, Total.N, PC1, PC2) %>% 
+  left_join(plot.info, by = "plot_id")
 
   
 sp.env <- scores(res, display = "species") |>
