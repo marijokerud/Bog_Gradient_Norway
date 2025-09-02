@@ -34,7 +34,38 @@ enviromental.PCA <- enviromental %>%
   as.data.frame()
 
 
+################  COMMUNITY DATA  ################
+
+comm.wide <- comm.raw %>% 
+  gather(key = quadrat, value = cover, - species) %>% 
+  filter(!is.na(cover)) %>%                                        #remove NA's
+  mutate(cover = sqrt(cover)) %>% 
+  pivot_wider(names_from = species, 
+              values_from = cover, 
+              values_fill = 0)
+
+comm.sp <- comm.wide %>%
+  column_to_rownames("quadrat")
+
+# meta data
+comm.info <- comm.wide %>%
+  select(quadrat) %>% 
+  mutate(site= substr(quadrat, 1, 3)) %>%
+  left_join(enviromental)
+
+
+comm.long <- comm.raw %>% 
+  gather(key = quadrat, value = abundance, - species) %>% 
+  filter(!is.na(abundance)) %>%                                        #remove NA's
+  left_join(plant.type) %>%                                            # add functional trait to data
+  count(quadrat, funtype) %>%                                          #count no species in functional groups
+  complete(quadrat, nesting(funtype), fill = list(n = 0))              #fill inn functional groups (funtype) with 0 occurences
+
+
+
+
 ################  SPECIES RICHNESS  ################
+
 
 data.glmer<- richness %>% 
   left_join(enviromental) 

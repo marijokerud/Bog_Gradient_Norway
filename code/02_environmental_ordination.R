@@ -1,20 +1,6 @@
 library(tidyverse)
 library(vegan)
 
-#DATA
-climate <- climate.data %>% 
-  select(site, Precipitation, Tetraterm, lat, long) %>% 
-  gather(key = Variable, value = Deposition, - site, - lat, - long)
-
-enviromental <- enviromental.data %>% 
-  select(-Grid, -Site) %>% 
-  bind_rows(climate) %>% 
-  pivot_wider(names_from = Variable, values_from = Deposition)
-
-enviromental.PCA <- enviromental %>% 
-  select(-site) %>% #, -lat, -long
-  as.data.frame()
-
 
 # MAKE PCA
 res <- rda(enviromental.PCA, scale = TRUE, center = TRUE)

@@ -8,24 +8,6 @@ library(ggrepel)
 
 ## COMMUNITY ORDINATION (PCA)
 
-#COMMUNITY DATA
-comm.wide <- comm.raw %>% 
-  gather(key = quadrat, value = cover, - species) %>% 
-  filter(!is.na(cover)) %>%                                        #remove NA's
-  mutate(cover = sqrt(cover)) %>% 
-  pivot_wider(names_from = species, 
-              values_from = cover, 
-              values_fill = 0)
-
-comm.sp <- comm.wide %>%
-  column_to_rownames("quadrat")
-
-# meta data
-comm.info <- comm.wide %>%
-  select(quadrat) %>% 
-  mutate(site= substr(quadrat, 1, 3)) %>%
-  left_join(enviromental)
-
 
 # MAKE PCA
 res <- rda(comm.sp)
