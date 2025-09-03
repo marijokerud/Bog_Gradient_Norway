@@ -15,7 +15,10 @@ comm.raw <- comm.raw %>%
   select(-species_old)
 
 plot.info <- plot.info %>% 
-  select(quadrat, micro.topo)
+  mutate(site= substr(plot_id, 1, 3)) %>% 
+  select(site, plot_id, micro.topo) %>% 
+  left_join(enviromental %>% 
+              select(site, lat, long))
 
 
 ################ ENVIRONMENAL DATA #####################
@@ -37,7 +40,7 @@ enviromental.PCA <- enviromental %>%
 ################  COMMUNITY DATA  ################
 
 comm.wide <- comm.raw %>% 
-  gather(key = quadrat, value = cover, - species) %>% 
+  gather(key = plot_id, value = cover, - species) %>% 
   filter(!is.na(cover)) %>%                                        #remove NA's
   mutate(cover = sqrt(cover)) %>% 
   pivot_wider(names_from = species, 
@@ -45,21 +48,21 @@ comm.wide <- comm.raw %>%
               values_fill = 0)
 
 comm.sp <- comm.wide %>%
-  column_to_rownames("quadrat")
+  column_to_rownames("plot_id")
 
 # meta data
 comm.info <- comm.wide %>%
-  select(quadrat) %>% 
-  mutate(site= substr(quadrat, 1, 3)) %>%
+  select(plot_id) %>% 
+  mutate(site= substr(plot_id, 1, 3)) %>%
   left_join(enviromental)
 
 
 comm.long <- comm.raw %>% 
-  gather(key = quadrat, value = abundance, - species) %>% 
+  gather(key = plot_id, value = abundance, - species) %>% 
   filter(!is.na(abundance)) %>%                                        #remove NA's
   left_join(plant.type) %>%                                            # add functional trait to data
-  count(quadrat, funtype) %>%                                          #count no species in functional groups
-  complete(quadrat, nesting(funtype), fill = list(n = 0))              #fill inn functional groups (funtype) with 0 occurences
+  count(plot_id, funtype) %>%                                          #count no species in functional groups
+  complete(plot_id, nesting(funtype), fill = list(n = 0))              #fill inn functional groups (funtype) with 0 occurences
 
 
 
@@ -72,9 +75,9 @@ data.glmer<- richness %>%
 
 
 species_richness <- comm.raw %>% 
-  gather(key = quadrat, value = abundance, - species) %>% 
+  gather(key = plot_id, value = abundance, - species) %>% 
   filter(!is.na(abundance))  %>% 
-  mutate(site = gsub(".$", "", quadrat)) %>% 
+  mutate(site = gsub(".$", "", plot_id)) %>% 
   group_by(site) %>%
   summarise(
     richness = n_distinct(species),        # number of unique species
@@ -93,10 +96,10 @@ pca.data <- enviromental %>%
 ################  NMDS DATA  ################
 
 species.mat <- comm.raw %>% 
-  gather(key = quadrat, value = abundance, - species) %>% 
+  gather(key = plot_id, value = abundance, - species) %>% 
   filter(!is.na(abundance)) %>%                                        #remove NA's
-  mutate(quadrat= substr(quadrat, 1, 4)) %>% 
-  select(quadrat, species, abundance) %>% 
+  mutate(plot_id= substr(plot_id, 1, 4)) %>% 
+  select(plot_id, species, abundance) %>% 
   as.data.frame
 
 species.mat<- matrify(species.mat)
