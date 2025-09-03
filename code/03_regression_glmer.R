@@ -19,8 +19,6 @@ theme_set(theme_bw()+
 data.glmer <- richness %>% 
   left_join(env_output, by = "plot_id") %>% 
   mutate(site = factor(site))
-  mutate(scale_PC1 = as.numeric(scale(PC1)), 
-         scale_PC2 = as.numeric(scale(PC2)))
 
     
 
