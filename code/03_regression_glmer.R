@@ -16,31 +16,114 @@ library(performance)
 theme_set(theme_bw()+
             theme(panel.spacing=grid::unit(0,"lines")))
 
+
 data.glmer <- richness %>% 
   left_join(env_output, by = "plot_id") %>% 
-  mutate(site = factor(site))
+  mutate(site = factor(site)) %>% 
+  mutate(micro.topo = factor(micro.topo))
+summary(data.glmer)   
 
-    
 
-#res.reg<- glmer(no_species  ~ Deposition  + (1 | site), family = "poisson"(link = "log"), data = .))  
-
+################ GLM REGRESSION ################ 
 # Poisson mixed model (random intercept for site)
-m_pois <- glmmTMB(
+# TOTAL SPECIES RICHNESS
+mod_richness <- glmmTMB(
   total_richness ~ PC1 * PC2 + (1 | site),
   data = data.glmer,
   family = poisson(link = "log")
-)
+  )
+mod_richness2 <- glmmTMB(
+  total_richness ~ PC1 * PC2 + micro.topo + (1 | site),
+  data = data.glmer,
+  family = genpois(link = "log"),
+  control = glmmTMBControl(rank_check = "adjust")
+  )
+
+AICtab(mod_richness, mod_richness2)
+performance::compare_performance(mod_richness, mod_richness2, rank = TRUE)
+best <- mod_richness2
+summary(mod_richness2)
 
 # Diagnostics for Poisson
-res_pois <- DHARMa::simulateResiduals(m_pois)
-plot(res_pois)                     # residual plots
-DHARMa::testDispersion(res_pois) # overdispersion? (p < 0.05 indicates trouble)
-DHARMa::testZeroInflation(res_pois)
+res_richness <- DHARMa::simulateResiduals(best)
+plot(res_richness)                            # residual plots
+DHARMa::testDispersion(res_richness)          # overdispersion? (p < 0.05 indicates trouble), # should be non-significant for a good NB fit
+DHARMa::testZeroInflation(res_richness)
+performance::check_collinearity(best)     # PCs are orthogonal, but this confirms
+performance::r2(best)                     # marginal & conditional R2
+summary(best)                             # coefficients on the log scale
+confint(best)
 
+fx <- broom.mixed::tidy(best, effects = "fixed", conf.int = TRUE, exponentiate = TRUE)
+fx <- fx %>%
+  mutate(
+    pct_change_per_SD = (estimate - 1) * 100,
+    ci_low_pct        = (conf.low - 1) * 100,
+    ci_high_pct       = (conf.high - 1) * 100
+  )
+fx
+
+# SHANNON DIVERSITY
+mod_shannon <- glmmTMB(
+  shannon_diversity ~ PC1 * PC2 + (1 | site),
+  data = data.glmer,
+  family = poisson(link = "log")
+)
+mod_shannon2 <- glmmTMB(
+  shannon_diversity ~ PC1 * PC2 + micro.topo + (1 | site),
+  data = data.glmer,
+  family = poisson(link = "log")
+)
+mod_shannon3 <- glmmTMB(
+  shannon_diversity ~ PC1 * PC2 + (1 | site),
+  data = data.glmer,
+  family = genpois(link = "log")
+)
+mod_shannon4 <- glmmTMB(
+  shannon_diversity ~ PC1 * PC2 + micro.topo + (1 | site),
+  data = data.glmer,
+  family = genpois(link = "log")
+)
+
+AICtab(mod_shannon, mod_shannon2, mod_shannon3, mod_shannon4)
+performance::compare_performance(mod_shannon, mod_shannon2, rank = TRUE)
+best <- mod_shannon2
+summary(mod_shannon)
+
+# Diagnostics for Poisson
+res_shannon <- DHARMa::simulateResiduals(best)
+plot(res_shannon)                            # residual plots
+DHARMa::testDispersion(res_shannon)          # overdispersion? (p < 0.05 indicates trouble), # should be non-significant for a good NB fit
+DHARMa::testZeroInflation(res_shannon)
+performance::check_collinearity(best)     # PCs are orthogonal, but this confirms
+performance::r2(best)                     # marginal & conditional R2
+summary(best)                             # coefficients on the log scale
+confint(best)
+
+fx <- broom.mixed::tidy(best, effects = "fixed", conf.int = TRUE, exponentiate = TRUE)
+fx <- fx %>%
+  mutate(
+    pct_change_per_SD = (estimate - 1) * 100,
+    ci_low_pct        = (conf.low - 1) * 100,
+    ci_high_pct       = (conf.high - 1) * 100
+  )
+fx
 
 
 
 ################ OLD CODE
+fit_zipoisson <- glmmTMB(
+  total_richness ~ PC1 * PC2 + (1 | site),
+  data = data.glmer,
+  ziformula=~1,
+  family = poisson(link = "log"))
+
+summary(fit_zipoisson)
+fit_zinbinom <- update(fit_zipoisson,family=nbinom2)
+fit_zinbinom1 <- update(fit_zipoisson,family=nbinom1)
+AICtab(fit_zipoisson,fit_zinbinom,fit_zinbinom1) #Changes does not improve fit, keep original model 
+AICtab(fit_zipoisson,mod_richness)  
+
 ################  Number of species per plot  ################
 data.glmer <- data %>% 
   gather(key = plot_id, value = abundance, - species) %>% #species, funtype left_join(sppfun)
