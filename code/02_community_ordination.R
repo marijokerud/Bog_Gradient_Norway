@@ -17,8 +17,8 @@ scores(res, display = "sites")
   
 out <- bind_cols(comm.info, scores(res, display = "sites"))
 output <- out %>% 
-  select(plot_id, site, Total.N, PC1, PC2) %>% 
-  left_join(plot.info, by = "plot_id")
+  select(plot_id, Total.N, PC1, PC2) %>% 
+  right_join(plot.info, by = "plot_id")
   
 sp <- scores(res, display = "species") |>
   as.data.frame() |>
@@ -60,7 +60,7 @@ Site <- output %>%
                aes(x = centroid1, y = centroid2,
                xend = PC1, yend = PC2, 
                colour = site),
-               size = 0.6,
+               linewidth = 0.6,
                alpha = 0.5,
                show.legend = FALSE) +
   
@@ -115,3 +115,4 @@ Species <- sp %>%
   theme(aspect.ratio = 1,
           plot.tag.position = c(0, 0.8),
           plot.tag = element_text(vjust = -1.5, hjust = -0.5, size = 10))
+Species
