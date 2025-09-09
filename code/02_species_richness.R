@@ -26,7 +26,9 @@ richness <- richness.func %>%
   select(plot_id, total_richness) %>% 
   mutate(log_richness = log(total_richness)) %>% 
   left_join(richness.shannon, by = "plot_id") %>% 
-  mutate(evenness = shannon_diversity/log_richness)
+  mutate(evenness = shannon_diversity/log_richness) %>% 
+  mutate(site= substr(plot_id, 1, 3))
+
 
 write.xlsx(richness.sp, "output/richness.xlsx")
 
