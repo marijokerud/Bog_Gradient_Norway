@@ -71,7 +71,8 @@ comm.long <- comm.raw %>%
 
 
 data.glmer<- richness %>% 
-  left_join(enviromental) 
+  left_join(enviromental) %>% 
+  left_join(plot.info)
 
 
 species_richness <- comm.raw %>% 
