@@ -9,9 +9,10 @@ summary(res)
 scores(res, display = "sites")
 
 output <- bind_cols(enviromental, scores(res, display = "sites"))
-#output <- out %>% 
-  select(plot_id, site, Total.N, PC1, PC2) %>% 
-  left_join(plot.info, by = "plot_id")
+env_output <- output %>% 
+  select(site, PC1, PC2) %>% 
+  left_join(plot.info, by = "site") %>% 
+  mutate(lat = as.numeric(scale(lat)), long = as.numeric(scale(long)))
 
   
 sp.env <- scores(res, display = "species") |>
@@ -47,7 +48,7 @@ Site
  
 #### ARROWS
 important_env <- sp.env %>%
-  mutate(length = sqrt(PC1^2 + PC2^2)) #%>%
+  mutate(length = sqrt(PC1^2 + PC2^2)) %>%
   filter(length > 0.6)
 
 #  #geom_point(size = 2) +
@@ -67,3 +68,4 @@ arrow.env <- output %>%
         plot.tag.position = c(0, 0.8),
         plot.tag = element_text(vjust = -1.5, hjust = -0.5, size = 10))
 
+arrow.env
