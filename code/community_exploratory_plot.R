@@ -4,6 +4,7 @@
 plot1 <- data.glmer %>% 
   ggplot(aes(x = micro.topo, y = total_richness)) +
   geom_boxplot() 
+plot1
 plot1site <- data.glmer %>% 
   ggplot(aes(x = total_richness, y = PC1, color = site)) +
   geom_point(size = 2) 
@@ -80,3 +81,4 @@ plot2topo
 data.glmer %>% 
   ggplot(aes(x = evenness, colour = micro.topo)) +
   geom_density()
+
