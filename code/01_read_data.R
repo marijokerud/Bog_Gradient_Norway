@@ -14,12 +14,6 @@ plot.info <-read_excel(path = "Data/species-richness-2018.xlsx", sheet = "Plot",
 comm.raw <- comm.raw %>% 
   select(-species_old)
 
-plot.info <- plot.info %>% 
-  mutate(site= substr(plot_id, 1, 3)) %>% 
-  select(site, plot_id, micro.topo) %>% 
-  left_join(enviromental %>% 
-              select(site, lat, long))
-
 
 ################ ENVIRONMENAL DATA #####################
 
@@ -36,6 +30,12 @@ enviromental.PCA <- enviromental %>%
   select(-site) %>% #, -lat, -long
   as.data.frame()
 
+
+plot.info <- plot.info %>% 
+  mutate(site= substr(plot_id, 1, 3)) %>% 
+  select(site, plot_id, micro.topo) %>% 
+  left_join(enviromental %>% 
+              select(site, lat, long))
 
 ################  COMMUNITY DATA  ################
 
