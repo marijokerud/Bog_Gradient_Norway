@@ -70,11 +70,6 @@ comm.long <- comm.raw %>%
 ################  SPECIES RICHNESS  ################
 
 
-data.glmer<- richness %>% 
-  left_join(enviromental) %>% 
-  left_join(plot.info)
-
-
 species_richness <- comm.raw %>% 
   gather(key = plot_id, value = abundance, - species) %>% 
   filter(!is.na(abundance))  %>% 
