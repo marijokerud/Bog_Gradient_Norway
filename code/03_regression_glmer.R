@@ -30,21 +30,32 @@ summary(data.glmer)
 ################ GLM REGRESSION ################ 
 # Poisson mixed model (random intercept for site)
 # TOTAL SPECIES RICHNESS
-mod_richness <- glmer(
-  total_richness ~ PC1 * PC2 + (1 | site),
+mod_richness1 <- glmer(
+  total_richness ~ PC1 + (1 | site),
   data = data.glmer,
-  family = poisson(link = "log")
-  )
-mod_richness2 <- glmer(
-  total_richness ~ PC1 * PC2 + micro.topo + (1 | site),
-  data = data.glmer,
-  family = poisson(link = "log")
-  )
+  family = poisson(link = "log"))
 
-AICtab(mod_richness, mod_richness2)
-performance::compare_performance(mod_richness, mod_richness2, rank = TRUE)
-best <- mod_richness2
-summary(mod_richness2)
+mod_richness2 <- glmer(
+  total_richness ~ PC2 + (1 | site),
+  data = data.glmer,
+  family = poisson(link = "log"))
+
+mod_richness3 <- glmer(
+  total_richness ~ PC1 + micro.topo + (1 | site),
+  data = data.glmer,
+  family = poisson(link = "log"))
+
+mod_richness4 <- glmer(
+  total_richness ~ PC2 + micro.topo + (1 | site),
+  data = data.glmer,
+  family = poisson(link = "log"))
+
+AICtab(mod_richness1, mod_richness2, mod_richness3, mod_richness4)
+res_richness<-compare_performance(mod_richness1, mod_richness2, mod_richness3, mod_richness4, rank = TRUE)
+plot(res_richness)
+res_richness
+best <- mod_richness4
+summary(mod_richness3)
 
 # Diagnostics for Poisson
 res_richness <- DHARMa::simulateResiduals(best)
@@ -67,15 +78,28 @@ fx
 
 # SHANNON DIVERSITY
 mod_shannon1 <- lmer(
-  shannon_diversity ~ PC1 * PC2 + (1 | site),
+  shannon_diversity ~ PC1 + (1 | site),
   data = data.glmer)
 
 mod_shannon2 <- lmer(
-  shannon_diversity ~ PC1 * PC2 + micro.topo + (1 | site),
+  shannon_diversity ~ PC2 + (1 | site),
   data = data.glmer)
 
-mod_shannon3 <- glmer(
-  shannon_diversity ~ PC1 * PC2 + (1 | site),
+mod_shannon3 <- lmer(
+  shannon_diversity ~ PC1 + micro.topo + (1 | site),
+  data = data.glmer)
+
+mod_shannon4 <- lmer(
+  shannon_diversity ~ PC2 + micro.topo + (1 | site),
+  data = data.glmer)
+
+mod_shannon5 <- glmer(
+  shannon_diversity ~ PC1 + micro.topo + (1 | site),
+  data = data.glmer,
+  family = Gamma(link = "log"))
+
+mod_shannon6 <- glmer(
+  shannon_diversity ~ PC2 + micro.topo + (1 | site),
   data = data.glmer,
   family = Gamma(link = "log"))
 
@@ -87,29 +111,41 @@ check_distribution_box <- data.glmer %>%
   ggplot(aes(y = shannon_diversity)) +
   geom_boxplot()   
 
-mod_shannon4 <- glmer(
-  shannon_diversity ~ PC1 * PC2 + micro.topo + (1 | site),
-  data = data.glmer, 
-  family = Gamma(link = "log"))
 
-AICtab(mod_shannon1, mod_shannon2, mod_shannon3, mod_shannon4)
-res_shannon<-compare_performance(mod_shannon1, mod_shannon2, mod_shannon3, mod_shannon4, rank = TRUE)
+AICtab(mod_shannon1, mod_shannon2, mod_shannon3, mod_shannon4, mod_shannon5, mod_shannon6)
+res_shannon<-compare_performance(mod_shannon1, mod_shannon2, mod_shannon3, mod_shannon4,mod_shannon5, mod_shannon6, rank = TRUE)
 plot(res_shannon)
-best <- mod_shannon2
+res_shannon
+best <- mod_shannon6
 summary(best)
+#Overall Model Check
+check_model(best)
 
 
 # EVENNESS
 mod_evenness1 <- lmer(
-  evenness ~ PC1 * PC2 + (1 | site),
+  evenness ~ PC1 + (1 | site),
   data = data.glmer)
 
 mod_evenness2 <- lmer(
-  evenness ~ PC1 * PC2 + micro.topo + (1 | site),
+  evenness ~ PC2 + (1 | site),
   data = data.glmer)
 
-mod_evenness3 <- glmer(
-  evenness ~ PC1 * PC2 + (1 | site),
+mod_evenness3 <- lmer(
+  evenness ~ PC1 + micro.topo + (1 | site),
+  data = data.glmer)
+
+mod_evenness4 <- lmer(
+  evenness ~ PC2 + micro.topo + (1 | site),
+  data = data.glmer)
+
+mod_evenness5 <- glmer(
+  evenness ~ PC1 + micro.topo + (1 | site),
+  data = data.glmer,
+  family = Gamma(link = "log"))
+
+mod_evenness6 <- glmer(
+  evenness ~ PC2 + micro.topo +  (1 | site),
   data = data.glmer,
   family = Gamma(link = "log"))
 
@@ -121,60 +157,20 @@ check_distribution_box <- data.glmer %>%
   ggplot(aes(y = evenness)) +
   geom_boxplot()   
 
-mod_evenness4 <- glmer(
-  evenness ~ PC1 * PC2 + micro.topo + (1 | site),
-  data = data.glmer, 
-  family = Gamma(link = "log"))
-
-AICtab(mod_evenness1, mod_evenness2, mod_evenness3, mod_evenness4)
-res_evenness<-compare_performance(mod_evenness1, mod_evenness2, mod_evenness3, mod_evenness4, rank = TRUE)
+AICtab(mod_evenness1, mod_evenness2, mod_evenness3, mod_evenness4, mod_evenness5, mod_evenness6)
+res_evenness<-compare_performance(mod_evenness1, mod_evenness2, mod_evenness3, mod_evenness4, mod_evenness5, mod_evenness6, rank = TRUE)
+res_evenness
 plot(res_evenness)
-best <- mod_evenness2
+best <- mod_evenness3
 summary(best)
-
-# MODEL CHECKING, https://easystats.github.io/see/articles/performance.html#checking-model-assumptions
-#Binned Residuals
-result <- binned_residuals(best) 
-result #> Warning: Probably bad model fit. Only about 50% of the residuals are inside the error bounds.
-plot(result)
-#Check for Multicollinearity - Variance Inflation Factor
-result <- check_collinearity(best)
-plot(result)
-#Check for Outliers
-result <- check_outliers(best)
-plot(result, type = "dots")
-plot(result, type = "bars")
-#Check for Normal Distributed Residuals
-result <- simulate_residuals(best)
-plot(result, type = "density")       #Points deviates in beginning and end
-result <- check_residuals(best)
-plot(result, type = "density")
-plot(result, type = "qq")
-#Check for Heteroscedasticity
-result <- check_heteroscedasticity(best)
-plot(result)
-#Check for Homogeneity
-result <- check_homogeneity(best)
-plot(result)
-#Posterior Predictive Checks
-check_predictions(best)
 #Overall Model Check
 check_model(best)
-#Compare Model Performances
-result<-compare_performance(mod_shannon1, mod_shannon2, rank = TRUE)
-result<-compare_performance(mod_shannon3, mod_shannon4, rank = TRUE)
-result<-compare_performance(mod_shannon2, mod_shannon4, rank = TRUE)
-result<-compare_performance(mod_shannon1, mod_shannon2, mod_shannon3, mod_shannon4, rank = TRUE)
-plot(result)
-#Model and Vector Properties
-result <- check_distribution(best)
-plot(result)
 
-plot(res_evenness)
-plot(res_shannon)
-
-
-
+summary(data.glmer)
+res_richness
+res_shannon
+res_evenness
+summary(mod_evenness3)
 
 # Diagnostics for Poisson
 res_shannon <- DHARMa::simulateResiduals(best)
