@@ -55,9 +55,9 @@ res_richness<-compare_performance(mod_richness1, mod_richness2, mod_richness3, m
 plot(res_richness)
 res_richness
 best <- mod_richness4
-summary(mod_richness3)
+summary(mod_richness4)
 
-# Diagnostics for Poisson
+# DHARMa: residual diagnostics for hierarchical (multi-level/mixed) regression models, https://cran.r-project.org/web/packages/DHARMa/vignettes/DHARMa.html
 res_richness <- DHARMa::simulateResiduals(best)
 plot(res_richness)                            # residual plots
 DHARMa::testDispersion(res_richness)          # overdispersion? (p < 0.05 indicates trouble), # should be non-significant for a good NB fit
@@ -121,6 +121,17 @@ summary(best)
 #Overall Model Check
 check_model(best)
 
+# DHARMa: residual diagnostics for hierarchical (multi-level/mixed) regression models, https://cran.r-project.org/web/packages/DHARMa/vignettes/DHARMa.html
+res_shannon <- DHARMa::simulateResiduals(best)
+plot(res_shannon)                            # residual plots
+DHARMa::testDispersion(res_shannon)          # overdispersion? (p < 0.05 indicates trouble), # should be non-significant for a good NB fit
+DHARMa::testZeroInflation(res_shannon)
+performance::check_collinearity(best)     # PCs are orthogonal, but this confirms
+performance::r2(best)                     # marginal & conditional R2
+summary(best)                             # coefficients on the log scale
+confint(best)
+
+
 
 # EVENNESS
 mod_evenness1 <- lmer(
@@ -161,7 +172,7 @@ AICtab(mod_evenness1, mod_evenness2, mod_evenness3, mod_evenness4, mod_evenness5
 res_evenness<-compare_performance(mod_evenness1, mod_evenness2, mod_evenness3, mod_evenness4, mod_evenness5, mod_evenness6, rank = TRUE)
 res_evenness
 plot(res_evenness)
-best <- mod_evenness3
+best <- mod_evenness4
 summary(best)
 #Overall Model Check
 check_model(best)
@@ -172,11 +183,11 @@ res_shannon
 res_evenness
 summary(mod_evenness3)
 
-# Diagnostics for Poisson
-res_shannon <- DHARMa::simulateResiduals(best)
-plot(res_shannon)                            # residual plots
-DHARMa::testDispersion(res_shannon)          # overdispersion? (p < 0.05 indicates trouble), # should be non-significant for a good NB fit
-DHARMa::testZeroInflation(res_shannon)
+# DHARMa: residual diagnostics for hierarchical (multi-level/mixed) regression models, https://cran.r-project.org/web/packages/DHARMa/vignettes/DHARMa.html
+res_evenness <- DHARMa::simulateResiduals(best)
+plot(res_evenness)                            # residual plots
+DHARMa::testDispersion(res_evenness)          # overdispersion? (p < 0.05 indicates trouble), # should be non-significant for a good NB fit
+DHARMa::testZeroInflation(res_evenness)
 performance::check_collinearity(best)     # PCs are orthogonal, but this confirms
 performance::r2(best)                     # marginal & conditional R2
 summary(best)                             # coefficients on the log scale
