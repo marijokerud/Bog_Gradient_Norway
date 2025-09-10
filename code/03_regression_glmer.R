@@ -11,6 +11,9 @@ library(glmmTMB)
 library(bbmle) 
 library(DHARMa)
 library(performance)
+library(see)
+library(qqplotr)
+library(randomForest)
 
 ## cosmetic
 theme_set(theme_bw()+
@@ -27,16 +30,15 @@ summary(data.glmer)
 ################ GLM REGRESSION ################ 
 # Poisson mixed model (random intercept for site)
 # TOTAL SPECIES RICHNESS
-mod_richness <- glmmTMB(
+mod_richness <- glmer(
   total_richness ~ PC1 * PC2 + (1 | site),
   data = data.glmer,
   family = poisson(link = "log")
   )
-mod_richness2 <- glmmTMB(
+mod_richness2 <- glmer(
   total_richness ~ PC1 * PC2 + micro.topo + (1 | site),
   data = data.glmer,
-  family = genpois(link = "log"),
-  control = glmmTMBControl(rank_check = "adjust")
+  family = poisson(link = "log")
   )
 
 AICtab(mod_richness, mod_richness2)
@@ -64,31 +66,115 @@ fx <- fx %>%
 fx
 
 # SHANNON DIVERSITY
-mod_shannon <- glmmTMB(
+mod_shannon1 <- lmer(
   shannon_diversity ~ PC1 * PC2 + (1 | site),
-  data = data.glmer,
-  family = poisson(link = "log")
-)
-mod_shannon2 <- glmmTMB(
-  shannon_diversity ~ PC1 * PC2 + micro.topo + (1 | site),
-  data = data.glmer,
-  family = poisson(link = "log")
-)
-mod_shannon3 <- glmmTMB(
-  shannon_diversity ~ PC1 * PC2 + (1 | site),
-  data = data.glmer,
-  family = genpois(link = "log")
-)
-mod_shannon4 <- glmmTMB(
-  shannon_diversity ~ PC1 * PC2 + micro.topo + (1 | site),
-  data = data.glmer,
-  family = genpois(link = "log")
-)
+  data = data.glmer)
 
-AICtab(mod_shannon, mod_shannon2, mod_shannon3, mod_shannon4)
-performance::compare_performance(mod_shannon, mod_shannon2, rank = TRUE)
+mod_shannon2 <- lmer(
+  shannon_diversity ~ PC1 * PC2 + micro.topo + (1 | site),
+  data = data.glmer)
+
+mod_shannon3 <- glmer(
+  shannon_diversity ~ PC1 * PC2 + (1 | site),
+  data = data.glmer,
+  family = Gamma(link = "log"))
+
+check_distribution_hist <- data.glmer %>% 
+  ggplot(aes(x = shannon_diversity)) +
+  geom_histogram()   
+
+check_distribution_box <- data.glmer %>% 
+  ggplot(aes(y = shannon_diversity)) +
+  geom_boxplot()   
+
+mod_shannon4 <- glmer(
+  shannon_diversity ~ PC1 * PC2 + micro.topo + (1 | site),
+  data = data.glmer, 
+  family = Gamma(link = "log"))
+
+AICtab(mod_shannon1, mod_shannon2, mod_shannon3, mod_shannon4)
+res_shannon<-compare_performance(mod_shannon1, mod_shannon2, mod_shannon3, mod_shannon4, rank = TRUE)
+plot(res_shannon)
 best <- mod_shannon2
-summary(mod_shannon)
+summary(best)
+
+
+# EVENNESS
+mod_evenness1 <- lmer(
+  evenness ~ PC1 * PC2 + (1 | site),
+  data = data.glmer)
+
+mod_evenness2 <- lmer(
+  evenness ~ PC1 * PC2 + micro.topo + (1 | site),
+  data = data.glmer)
+
+mod_evenness3 <- glmer(
+  evenness ~ PC1 * PC2 + (1 | site),
+  data = data.glmer,
+  family = Gamma(link = "log"))
+
+check_distribution_hist <- data.glmer %>% 
+  ggplot(aes(x = evenness)) +
+  geom_histogram()   
+
+check_distribution_box <- data.glmer %>% 
+  ggplot(aes(y = evenness)) +
+  geom_boxplot()   
+
+mod_evenness4 <- glmer(
+  evenness ~ PC1 * PC2 + micro.topo + (1 | site),
+  data = data.glmer, 
+  family = Gamma(link = "log"))
+
+AICtab(mod_evenness1, mod_evenness2, mod_evenness3, mod_evenness4)
+res_evenness<-compare_performance(mod_evenness1, mod_evenness2, mod_evenness3, mod_evenness4, rank = TRUE)
+plot(res_evenness)
+best <- mod_evenness2
+summary(best)
+
+# MODEL CHECKING, https://easystats.github.io/see/articles/performance.html#checking-model-assumptions
+#Binned Residuals
+result <- binned_residuals(best) 
+result #> Warning: Probably bad model fit. Only about 50% of the residuals are inside the error bounds.
+plot(result)
+#Check for Multicollinearity - Variance Inflation Factor
+result <- check_collinearity(best)
+plot(result)
+#Check for Outliers
+result <- check_outliers(best)
+plot(result, type = "dots")
+plot(result, type = "bars")
+#Check for Normal Distributed Residuals
+result <- simulate_residuals(best)
+plot(result, type = "density")       #Points deviates in beginning and end
+result <- check_residuals(best)
+plot(result, type = "density")
+plot(result, type = "qq")
+#Check for Heteroscedasticity
+result <- check_heteroscedasticity(best)
+plot(result)
+#Check for Homogeneity
+result <- check_homogeneity(best)
+plot(result)
+#Posterior Predictive Checks
+check_predictions(best)
+#Overall Model Check
+check_model(best)
+#Compare Model Performances
+result<-compare_performance(mod_shannon1, mod_shannon2, rank = TRUE)
+result<-compare_performance(mod_shannon3, mod_shannon4, rank = TRUE)
+result<-compare_performance(mod_shannon2, mod_shannon4, rank = TRUE)
+result<-compare_performance(mod_shannon1, mod_shannon2, mod_shannon3, mod_shannon4, rank = TRUE)
+plot(result)
+#Model and Vector Properties
+result <- check_distribution(best)
+plot(result)
+
+plot(res_evenness)
+plot(res_shannon)
+
+
+
 
 # Diagnostics for Poisson
 res_shannon <- DHARMa::simulateResiduals(best)
