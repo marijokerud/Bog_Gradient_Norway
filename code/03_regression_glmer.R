@@ -29,7 +29,7 @@ summary(data.glmer)
 
 ################ GLM REGRESSION ################ 
 # Poisson mixed model (random intercept for site)
-# TOTAL SPECIES RICHNESS
+################# TOTAL SPECIES RICHNESS
 mod_richness1 <- glmer(
   total_richness ~ PC1 + (1 | site),
   data = data.glmer,
@@ -76,7 +76,7 @@ fx <- fx %>%
   )
 fx
 
-# SHANNON DIVERSITY
+################# SHANNON DIVERSITY ################
 mod_shannon1 <- lmer(
   shannon_diversity ~ PC1 + (1 | site),
   data = data.glmer)
@@ -133,7 +133,7 @@ confint(best)
 
 
 
-# EVENNESS
+################# EVENNESS ################
 mod_evenness1 <- lmer(
   evenness ~ PC1 + (1 | site),
   data = data.glmer)
