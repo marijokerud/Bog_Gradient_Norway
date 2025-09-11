@@ -11,8 +11,7 @@ scores(res, display = "sites")
 output <- bind_cols(enviromental, scores(res, display = "sites"))
 env_output <- output %>% 
   select(site, PC1, PC2) %>% 
-  left_join(plot.info, by = "site") %>% 
-  mutate(lat = as.numeric(scale(lat)), long = as.numeric(scale(long)))
+  left_join(plot.info, by = "site") 
 
   
 sp.env <- scores(res, display = "species") |>
