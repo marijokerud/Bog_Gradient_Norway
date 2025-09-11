@@ -86,26 +86,29 @@ fx
 
 
 ################# SHANNON DIVERSITY & EVENNESS ################
-diversity.data <- data.glmer %>% 
-  select(site, plot_id, shannon_diversity, evenness, PC1, PC2, micro.topo) %>% 
+data.diversity.lmer <- richness %>% 
+  left_join(env_output, by = "plot_id") %>% 
+  mutate(site = factor(site),
+         micro.topo = factor(micro.topo)) %>%
+  select(-no_species, -log_richness) %>% 
   pivot_longer(cols = c("shannon_diversity", "evenness"),names_to = "diversity", values_to = "div.scores") %>% 
-  pivot_longer(cols = starts_with("PC"),names_to = "PC", values_to = "PC.scores") %>% 
-  left_join(comm.long, by = "plot_id", relationship = "many-to-many")
+  pivot_longer(cols = starts_with("PC"),names_to = "PC", values_to = "PC.scores") 
 
-#What to do with functional groups here??
+
 div.lmer <- 
-  diversity.data |> 
+  data.diversity.lmer |> 
   # group by funtype
-  group_by(diversity, PC) |>
+  group_by(funtype, diversity, PC) |>
   # nest - each group becomes a single row with a list column
   nest() |> 
   # map over the list column to fit a model then extract coefficients
   mutate(models = map(data, \(d)lmer(div.scores ~ PC.scores * micro.topo + (1 | site), data = d)),
          coefs = map(models, broom::tidy)) |>
-  select(diversity, PC, coefs) |> 
+  select(funtype, diversity, PC, coefs) |> 
   # unnest to see the coefficients
   unnest(coefs)
 
+#write.xlsx(as.data.frame(div.lmer), "output/regression-diversity.xlsx")
 
 mod_shannon1 <- lmerTest::lmer(
   shannon_diversity ~ PC1 + (1 | site),
