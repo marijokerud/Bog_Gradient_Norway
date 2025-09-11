@@ -17,7 +17,7 @@ richness.func <- comm.long %>%
               mutate(funtype = "total_moss"))   %>% 
   rename(no_species = n)
 
-#SHANNON INDEX
+#SHANNON INDEX, on total_richness and moss_richness
 
 richness.shannon <- diversity(comm.sp, index = "shannon")
 richness.shannon <- as.data.frame(richness.shannon) %>% 

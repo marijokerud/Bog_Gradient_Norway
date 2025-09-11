@@ -39,7 +39,7 @@ plot.info <- plot.info %>%
 
 ################  COMMUNITY DATA  ################
 
-comm.wide <- comm.raw %>% 
+comm.wide.all <- comm.raw %>% 
   gather(key = plot_id, value = cover, - species) %>% 
   filter(!is.na(cover)) %>%                                        #remove NA's
   mutate(cover = sqrt(cover)) %>% 
@@ -47,7 +47,21 @@ comm.wide <- comm.raw %>%
               values_from = cover, 
               values_fill = 0)
 
-comm.sp <- comm.wide %>%
+comm.sp.all <- comm.wide %>%
+  column_to_rownames("plot_id")
+
+comm.wide.moss <- comm.raw %>% 
+  gather(key = plot_id, value = cover, - species) %>% 
+  filter(!is.na(cover)) %>%                                        #remove NA's
+  mutate(cover = sqrt(cover)) %>% 
+  left_join(plant.type) %>% 
+  filter(funtype %in% c("live", "spha", "moss")) %>% 
+  select(-funtype) %>% 
+  pivot_wider(names_from = species, 
+              values_from = cover, 
+              values_fill = 0)
+
+comm.sp.moss <- comm.wide.moss %>%
   column_to_rownames("plot_id")
 
 # meta data
@@ -64,7 +78,7 @@ comm.long <- comm.raw %>%
   count(plot_id, funtype) %>%                                          #count no species in functional groups
   complete(plot_id, nesting(funtype), fill = list(n = 0))              #fill inn functional groups (funtype) with 0 occurences
 
-
+#filter(funtype %in% c("total","shrub","forb", "gram", "live", "moss", "spha")) #remove ferns and tree (Pinus juv.)
 
 
 ################  SPECIES RICHNESS  ################
