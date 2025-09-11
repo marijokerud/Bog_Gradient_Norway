@@ -64,6 +64,7 @@ comm.wide.moss <- comm.raw %>%
 comm.sp.moss <- comm.wide.moss %>%
   column_to_rownames("plot_id")
 
+
 # meta data
 comm.info <- comm.wide %>%
   select(plot_id) %>% 
