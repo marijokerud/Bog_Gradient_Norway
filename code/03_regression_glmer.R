@@ -14,48 +14,54 @@ library(performance)
 library(see)
 library(qqplotr)
 library(randomForest)
-
-## cosmetic
-theme_set(theme_bw()+
-            theme(panel.spacing=grid::unit(0,"lines")))
-
-
-data.glmer <- richness %>% 
-  left_join(env_output, by = "plot_id") %>% 
-  mutate(site = factor(site)) %>% 
-  mutate(micro.topo = factor(micro.topo))
-summary(data.glmer)   
+library(lmerTest)
 
 
 ################ GLM REGRESSION ################ 
 # Poisson mixed model (random intercept for site)
 ################# TOTAL SPECIES RICHNESS
+
+data.glmer.richness <- richness.func %>% 
+  left_join(env_output, by = "plot_id") %>% 
+  mutate(site = factor(site),
+         micro.topo = factor(micro.topo)) %>% 
+  pivot_longer(cols = starts_with("PC"),names_to = "PC", values_to = "scores")
+summary(data.glmer.richness) 
+
+fun.glmer <- 
+  data.glmer.richness |> 
+  # group by funtype
+  group_by(PC, funtype) |>
+  # nest - each group becomes a single row with a list column
+  nest() |> 
+  # map over the list column to fit a model then extract coefficients
+  mutate(models = map(data, \(d)glmer(no_species ~ scores * micro.topo + (1 | site), family = poisson(link = "log"), data = d)),
+         coefs = map(models, broom::tidy)) |>
+  select(PC, funtype, coefs) |> 
+  # unnest to see the coefficients
+  unnest(coefs)
+
+#write.xlsx(as.data.frame(fun.glmer), "output/regression-richness.xlsx")
+
 mod_richness1 <- glmer(
-  total_richness ~ PC1 + (1 | site),
+  total_richness ~ PC1 * micro.topo + (1 | site),
   data = data.glmer,
   family = poisson(link = "log"))
 
 mod_richness2 <- glmer(
-  total_richness ~ PC2 + (1 | site),
+  total_richness ~ PC2 * micro.topo + (1 | site),
   data = data.glmer,
   family = poisson(link = "log"))
 
-mod_richness3 <- glmer(
-  total_richness ~ PC1 + micro.topo + (1 | site),
-  data = data.glmer,
-  family = poisson(link = "log"))
+AICtab(mod_richness1, mod_richness2)
+res_richness<-compare_performance(mod_richness1, mod_richness2, rank = TRUE)
+summary(mod_richness1)
+summary(mod_richness2)
 
-mod_richness4 <- glmer(
-  total_richness ~ PC2 + micro.topo + (1 | site),
-  data = data.glmer,
-  family = poisson(link = "log"))
-
-AICtab(mod_richness1, mod_richness2, mod_richness3, mod_richness4)
-res_richness<-compare_performance(mod_richness1, mod_richness2, mod_richness3, mod_richness4, rank = TRUE)
 plot(res_richness)
 res_richness
-best <- mod_richness4
-summary(mod_richness4)
+best <- mod_richness2
+summary(mod_richness1)
 
 # DHARMa: residual diagnostics for hierarchical (multi-level/mixed) regression models, https://cran.r-project.org/web/packages/DHARMa/vignettes/DHARMa.html
 res_richness <- DHARMa::simulateResiduals(best)
@@ -76,32 +82,54 @@ fx <- fx %>%
   )
 fx
 
-################# SHANNON DIVERSITY ################
-mod_shannon1 <- lmer(
+
+
+
+################# SHANNON DIVERSITY & EVENNESS ################
+diversity.data <- data.glmer %>% 
+  select(site, plot_id, shannon_diversity, evenness, PC1, PC2, micro.topo) %>% 
+  pivot_longer(cols = c("shannon_diversity", "evenness"),names_to = "diversity", values_to = "div.scores") %>% 
+  pivot_longer(cols = starts_with("PC"),names_to = "PC", values_to = "PC.scores") %>% 
+  left_join(comm.long, by = "plot_id", relationship = "many-to-many")
+
+#What to do with functional groups here??
+div.lmer <- 
+  diversity.data |> 
+  # group by funtype
+  group_by(diversity, PC) |>
+  # nest - each group becomes a single row with a list column
+  nest() |> 
+  # map over the list column to fit a model then extract coefficients
+  mutate(models = map(data, \(d)lmer(div.scores ~ PC.scores * micro.topo + (1 | site), data = d)),
+         coefs = map(models, broom::tidy)) |>
+  select(diversity, PC, coefs) |> 
+  # unnest to see the coefficients
+  unnest(coefs)
+
+
+mod_shannon1 <- lmerTest::lmer(
   shannon_diversity ~ PC1 + (1 | site),
   data = data.glmer)
 
-mod_shannon2 <- lmer(
+mod_shannon2 <- lmerTest::lmer(
   shannon_diversity ~ PC2 + (1 | site),
   data = data.glmer)
 
-mod_shannon3 <- lmer(
+mod_shannon3 <- lmerTest::lmer(
   shannon_diversity ~ PC1 + micro.topo + (1 | site),
   data = data.glmer)
 
-mod_shannon4 <- lmer(
+mod_shannon4 <- lmerTest::lmer(
   shannon_diversity ~ PC2 + micro.topo + (1 | site),
   data = data.glmer)
 
-mod_shannon5 <- glmer(
-  shannon_diversity ~ PC1 + micro.topo + (1 | site),
-  data = data.glmer,
-  family = Gamma(link = "log"))
+mod_shannon5 <- lmerTest::lmer(
+  shannon_diversity ~ PC1 * micro.topo + (1 | site),
+  data = data.glmer)
 
-mod_shannon6 <- glmer(
-  shannon_diversity ~ PC2 + micro.topo + (1 | site),
-  data = data.glmer,
-  family = Gamma(link = "log"))
+mod_shannon6 <- lmerTest::lmer(
+  shannon_diversity ~ PC2 * micro.topo + (1 | site),
+  data = data.glmer)
 
 check_distribution_hist <- data.glmer %>% 
   ggplot(aes(x = shannon_diversity)) +
@@ -116,10 +144,13 @@ AICtab(mod_shannon1, mod_shannon2, mod_shannon3, mod_shannon4, mod_shannon5, mod
 res_shannon<-compare_performance(mod_shannon1, mod_shannon2, mod_shannon3, mod_shannon4,mod_shannon5, mod_shannon6, rank = TRUE)
 plot(res_shannon)
 res_shannon
-best <- mod_shannon6
+best <- mod_shannon5
 summary(best)
 #Overall Model Check
 check_model(best)
+summary(mod_shannon3)
+
+#
 
 # DHARMa: residual diagnostics for hierarchical (multi-level/mixed) regression models, https://cran.r-project.org/web/packages/DHARMa/vignettes/DHARMa.html
 res_shannon <- DHARMa::simulateResiduals(best)
@@ -150,15 +181,13 @@ mod_evenness4 <- lmer(
   evenness ~ PC2 + micro.topo + (1 | site),
   data = data.glmer)
 
-mod_evenness5 <- glmer(
-  evenness ~ PC1 + micro.topo + (1 | site),
-  data = data.glmer,
-  family = Gamma(link = "log"))
+mod_evenness5 <- lmer(
+  evenness ~ PC1 * micro.topo + (1 | site),
+  data = data.glmer)
 
-mod_evenness6 <- glmer(
-  evenness ~ PC2 + micro.topo +  (1 | site),
-  data = data.glmer,
-  family = Gamma(link = "log"))
+mod_evenness6 <- lmer(
+  evenness ~ PC2 * micro.topo +  (1 | site),
+  data = data.glmer)
 
 check_distribution_hist <- data.glmer %>% 
   ggplot(aes(x = evenness)) +
@@ -176,6 +205,8 @@ best <- mod_evenness4
 summary(best)
 #Overall Model Check
 check_model(best)
+
+summary(mod_evenness6)
 
 summary(data.glmer)
 res_richness
